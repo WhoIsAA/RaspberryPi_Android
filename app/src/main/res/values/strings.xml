@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">RaspberryPi</string>
+
+    <string name="server_connecting">正在连接服务器...</string>
+    <string name="server_status_success">服务器连接状态：Success</string>
+    <string name="server_status_failed">服务器连接状态：Failed</string>
+    <string name="car_status_success">小车控制状态：Success</string>
+    <string name="car_status_failed">小车控制状态：Failed</string>
+    <string name="servo_horizontal">水平角度：%d</string>
+    <string name="servo_horizontal_failed">水平角度：Failed</string>
+    <string name="servo_vertical">垂直角度：%d</string>
+    <string name="servo_vertical_failed">垂直角度：Failed</string>
+</resources>

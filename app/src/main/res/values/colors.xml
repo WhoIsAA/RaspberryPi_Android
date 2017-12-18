@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+
+
+
+    <!-- BEGIN * 常用颜色值 -->
+    <color name="transparent">#00000000</color>
+    <color name="mask">#55000000</color>
+    <color name="white">#fff</color>
+    <color name="black">#000000</color>q
+    <color name="red">#f00</color>
+    <color name="green">#0f0</color>
+    <color name="blue">#00f</color>
+    <color name="orange">#FF5722</color>
+    <!-- END * 常用颜色值 -->
+
+    <color name="bg_common">#f6f6f6</color>
+    <color name="bg_gray_line">#cccccc</color>
+
+    <color name="textColor_content">#333</color>
+    <color name="textColor_caption">#999</color>
+    <color name="textColor_hint">#ccc</color>
+    <color name="textColor_date">#888</color>
+    <color name="textColor_detail_content">#222</color>
+    <color name="bg_tips">#66000000</color>
+</resources>

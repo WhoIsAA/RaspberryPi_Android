@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:width="@dimen/dist_150"
+        android:height="@dimen/dist_150">
+        <shape android:shape="oval">
+            <stroke
+                android:width="@dimen/dist_5"
+                android:color="#a9e7fc"
+                android:dashGap="@dimen/dist_10"
+                android:dashWidth="@dimen/dist_50"/>
+            <solid android:color="@color/transparent"/>
+        </shape>
+    </item>
+
+    <item
+        android:width="@dimen/dist_135"
+        android:height="@dimen/dist_135"
+        android:gravity="center">
+        <shape android:shape="oval">
+            <gradient
+                android:centerColor="@color/white"
+                android:centerX="0.5"
+                android:centerY="0.5"
+                android:endColor="#74436675"
+                android:gradientRadius="300"
+                android:startColor="#aa436675"
+                android:type="radial"/>
+        </shape>
+    </item>
+
+    <item
+        android:width="@dimen/dist_130"
+        android:height="@dimen/dist_130"
+        android:gravity="center">
+        <shape android:shape="oval">
+            <solid android:color="#436675"/>
+            <gradient
+                android:centerColor="@color/white"
+                android:centerX="0.5"
+                android:centerY="0.5"
+                android:endColor="#436675"
+                android:gradientRadius="250"
+                android:startColor="#436675"
+                android:type="radial"/>
+        </shape>
+    </item>
+
+    <item
+        android:width="@dimen/dist_105"
+        android:height="@dimen/dist_105"
+        android:gravity="center">
+        <shape android:shape="oval">
+            <solid android:color="#cc436675"/>
+        </shape>
+    </item>
+
+    <item
+        android:width="@dimen/dist_15"
+        android:height="@dimen/dist_15"
+        android:top="@dimen/dist_8"
+        android:gravity="top|center">
+        <bitmap android:src="@mipmap/ic_trigon_top"/>
+    </item>
+
+    <item
+        android:width="@dimen/dist_15"
+        android:height="@dimen/dist_15"
+        android:bottom="@dimen/dist_8"
+        android:gravity="bottom|center">
+        <bitmap android:src="@mipmap/ic_trigon_bottom"/>
+    </item>
+
+    <item
+        android:width="@dimen/dist_15"
+        android:height="@dimen/dist_15"
+        android:left="@dimen/dist_8"
+        android:gravity="left|center">
+        <bitmap android:src="@mipmap/ic_trigon_left"/>
+    </item>
+
+    <item
+        android:width="@dimen/dist_15"
+        android:height="@dimen/dist_15"
+        android:right="@dimen/dist_8"
+        android:gravity="right|center">
+        <bitmap android:src="@mipmap/ic_trigon_right"/>
+    </item>
+</layer-list>
