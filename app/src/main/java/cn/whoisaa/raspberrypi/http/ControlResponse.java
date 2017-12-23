@@ -7,14 +7,63 @@ package cn.whoisaa.raspberrypi.http;
  */
 public class ControlResponse {
 
-    private int hrAngle = -1;
-    private int vtAngle = -1;
+    /**
+     * data : {"vtAngle":0,"hrAngle":0}
+     * code : 200
+     * desc : servo control, orientation:0, angle:0 successed
+     */
 
-    public int getHrAngle() {
-        return hrAngle;
+    private Data data;
+    private int code;
+    private String desc;
+
+    public Data getData() {
+        return data;
     }
 
-    public int getVtAngle() {
-        return vtAngle;
+    public void setData(Data data) {
+        this.data = data;
+    }
+
+    public int getCode() {
+        return code;
+    }
+
+    public void setCode(int code) {
+        this.code = code;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
+    }
+
+    public static class Data {
+        /**
+         * vtAngle : 0
+         * hrAngle : 0
+         */
+
+        private int vtAngle;
+        private int hrAngle;
+
+        public int getVtAngle() {
+            return vtAngle;
+        }
+
+        public void setVtAngle(int vtAngle) {
+            this.vtAngle = vtAngle;
+        }
+
+        public int getHrAngle() {
+            return hrAngle;
+        }
+
+        public void setHrAngle(int hrAngle) {
+            this.hrAngle = hrAngle;
+        }
     }
 }

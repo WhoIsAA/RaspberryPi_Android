@@ -4,7 +4,7 @@ package cn.whoisaa.raspberrypi.http;
 public class UrlMgr {
 
     /** 服务器地址 */
-    public static final String API_URL = "http://192.168.1.21";
+    public static final String API_URL = "http://192.168.1.124:8000";
     /** 图片地址 */
     public static final String IMAGE_URL = "";
 
@@ -14,8 +14,8 @@ public class UrlMgr {
      *************************************************************** API请求地址 ***************************************************************
      ******************************************************************************************************************************************/
     public static final String RSPI_CONNECT_TEST = "/carpi/connect_test";
-    public static final String RSPI_CAR_CONTROL = "/carpi/carControl";
-    public static final String RSPI_SERVO_CONTROL = "/carpi/servoControl";
+    public static final String RSPI_CAR_CONTROL = "/carpi/car_control";
+    public static final String RSPI_SERVO_CONTROL = "/carpi/servo_control";
 
 
 

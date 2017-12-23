@@ -14,6 +14,8 @@ import android.view.MotionEvent;
  */
 public class VerticalSeekBar extends AppCompatSeekBar {
 
+    private OnSeekBarChangeListener mOnSeekBarChangeListener;
+
     public VerticalSeekBar(Context context) {
         super(context);
     }
@@ -36,10 +38,33 @@ public class VerticalSeekBar extends AppCompatSeekBar {
         setMeasuredDimension(getMeasuredHeight(), getMeasuredWidth());
     }
 
+    @Override
+    public void setOnSeekBarChangeListener(OnSeekBarChangeListener onSeekBarChangeListener) {
+        mOnSeekBarChangeListener = onSeekBarChangeListener;
+    }
+
     protected void onDraw(Canvas c) {
         c.rotate(-90);
         c.translate(-getHeight(), 0);
         super.onDraw(c);
+    }
+
+    void onStartTrackingTouch() {
+        if (mOnSeekBarChangeListener != null) {
+            mOnSeekBarChangeListener.onStartTrackingTouch(this);
+        }
+    }
+
+    void onStopTrackingTouch() {
+        if (mOnSeekBarChangeListener != null) {
+            mOnSeekBarChangeListener.onStopTrackingTouch(this);
+        }
+    }
+
+    private void attemptClaimDrag() {
+        if (getParent() != null) {
+            getParent().requestDisallowInterceptTouchEvent(true);
+        }
     }
 
     @Override
@@ -50,13 +75,25 @@ public class VerticalSeekBar extends AppCompatSeekBar {
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-            case MotionEvent.ACTION_MOVE:
-            case MotionEvent.ACTION_UP:
-                setProgress(getMax() - (int) (getMax() * event.getY() / getHeight()));
                 onSizeChanged(getWidth(), getHeight(), 0, 0);
+                setPressed(true);
+                onStartTrackingTouch();
+                break;
+
+            case MotionEvent.ACTION_MOVE:
+                onSizeChanged(getWidth(), getHeight(), 0, 0);
+                attemptClaimDrag();
+                setProgress(getMax() - (int) (getMax() * event.getY() / getHeight()));
+                break;
+            case MotionEvent.ACTION_UP:
+                onSizeChanged(getWidth(), getHeight(), 0, 0);
+                onStopTrackingTouch();
+                setPressed(false);
                 break;
 
             case MotionEvent.ACTION_CANCEL:
+                onStopTrackingTouch();
+                setPressed(false);
                 break;
         }
         return true;

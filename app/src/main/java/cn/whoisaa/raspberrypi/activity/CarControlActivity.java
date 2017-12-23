@@ -7,11 +7,13 @@ import android.support.v7.widget.AppCompatSeekBar;
 import android.text.TextUtils;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
 import com.yanzhenjie.nohttp.rest.OnResponseListener;
 import com.yanzhenjie.nohttp.rest.Response;
+
 import cn.whoisaa.raspberrypi.R;
-import cn.whoisaa.raspberrypi.http.RspiApi;
 import cn.whoisaa.raspberrypi.http.ControlResponse;
+import cn.whoisaa.raspberrypi.http.RspiApi;
 import cn.whoisaa.raspberrypi.utils.LogUtils;
 import cn.whoisaa.raspberrypi.widget.RockerView;
 
@@ -19,13 +21,13 @@ import cn.whoisaa.raspberrypi.widget.RockerView;
 public class CarControlActivity extends AppCompatActivity implements OnResponseListener<ControlResponse>, SeekBar.OnSeekBarChangeListener {
 
     //小车控制
-    public static final String CAR_FORWARD = "car_forward";
-    public static final String CAR_BACKWARD = "car_backward";
-    public static final String CAR_FRONT_TURNLEFT = "car_front_turnleft";
-    public static final String CAR_FRONT_TURNRIGHT = "car_front_turnright";
-    public static final String CAR_BACK_TURNLEFT = "car_back_turnleft";
-    public static final String CAR_BACK_TURNRIGHT = "car_back_turnright";
-    public static final String CAR_STOP = "car_stop";
+    public static final String CAR_FORWARD = "forward";
+    public static final String CAR_BACKWARD = "backward";
+    public static final String CAR_FRONT_TURNLEFT = "front_turnleft";
+    public static final String CAR_FRONT_TURNRIGHT = "front_turnright";
+    public static final String CAR_BACK_TURNLEFT = "back_turnleft";
+    public static final String CAR_BACK_TURNRIGHT = "back_turnright";
+    public static final String CAR_STOP = "stop";
     //舵机控制
     public static final int SERVO_HORIZONTAL = 0;
     public static final int SERVO_VERTICAL = 1;
@@ -118,14 +120,42 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
      * 服务器返回成功
      * @param response
      */
-    private void controlSuccess(@NonNull ControlResponse response) {
+    private void controlSuccess(int what, @NonNull ControlResponse response) {
+        if(response == null) {
+            return;
+        }
+
         mConnectSuccess = true;
         tvConnectStatus.setText(getString(R.string.server_status_success));
-        if(response.getHrAngle() >= 0) {
-            tvServoHrStatus.setText(String.format(getString(R.string.servo_horizontal), response.getHrAngle()));
+
+        if(response.getData() != null && response.getData().getHrAngle() >= 0) {
+            tvServoHrStatus.setText(String.format(getString(R.string.servo_horizontal), response.getData().getHrAngle()));
         }
-        if(response.getVtAngle() >= 0) {
-            tvServoVtStatus.setText(String.format(getString(R.string.servo_vertical), response.getVtAngle()));
+
+        if(response.getData() != null && response.getData().getVtAngle() >= 0) {
+            tvServoVtStatus.setText(String.format(getString(R.string.servo_vertical), response.getData().getVtAngle()));
+        }
+
+        switch (what) {
+            case REQ_CONNECT_TEST:
+                LogUtils.e("connectTest_onSucceed");
+                if(response.getData() != null && response.getData().getHrAngle() >= 0) {
+                    mSeekBarHr.setProgress(response.getData().getHrAngle());
+                }
+
+                if(response.getData() != null && response.getData().getVtAngle() >= 0) {
+                    mSeekBarVt.setProgress(response.getData().getVtAngle());
+                }
+                break;
+
+            case REQ_CAR_CONTROL:
+                LogUtils.e("carControl_onSucceed");
+                break;
+
+            case REQ_SERVO_CONTROL_HR:
+            case REQ_SERVO_CONTROL_VT:
+                LogUtils.e("servoControl_onSucceed");
+                break;
         }
     }
 
@@ -179,10 +209,10 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
      */
     private void carControl(String action) {
         LogUtils.e("小车方向：" + action);
-        mCurAction = action;
-        if(isConnectSuccess() && !TextUtils.isEmpty(action) && !mCurAction.equals(action)) {
+        if(isConnectSuccess() && !TextUtils.isEmpty(action) && (mCurAction == null || (mCurAction != null && !mCurAction.equals(action)))) {
             mRunning = !action.equals(CAR_STOP);
             RspiApi.getInstance().carControl(REQ_CAR_CONTROL, action, this);
+            mCurAction = action;
         }
     }
 
@@ -193,11 +223,11 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
      */
     private void servoControl(int orientation, int angle) {
         if(isConnectSuccess()) {
-            if(orientation == SERVO_HORIZONTAL && Math.abs(mHrAngle - angle) > 20) {
+            if(orientation == SERVO_HORIZONTAL) {
                 LogUtils.e("水平舵机转动角度：" + angle);
                 RspiApi.getInstance().servoControl(REQ_SERVO_CONTROL_HR, orientation, angle, this);
                 mHrAngle = angle;
-            } else if(orientation == SERVO_VERTICAL && Math.abs(mVtAngle - angle) > 20) {
+            } else if(orientation == SERVO_VERTICAL) {
                 LogUtils.e("垂直舵机转动角度：" + angle);
                 RspiApi.getInstance().servoControl(REQ_SERVO_CONTROL_VT, orientation, angle, this);
                 mVtAngle = angle;
@@ -209,13 +239,7 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
     /////////////////////////////////【SeekBar Listener】/////////////////////////////////////
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        //四舍五入取十的整数倍
-        progress = (int) (10 * Math.rint(progress / 10.0));
-        if (seekBar.equals(mSeekBarHr)) {
-            servoControl(SERVO_HORIZONTAL, progress);
-        } else if (seekBar.equals(mSeekBarVt)) {
-            servoControl(SERVO_VERTICAL, progress);
-        }
+
     }
 
     @Override
@@ -225,7 +249,14 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-
+        //四舍五入取十的整数倍
+        int progress = seekBar.getProgress();
+        progress = (int) (10 * Math.rint(progress / 10.0));
+        if (seekBar.equals(mSeekBarHr)) {
+            servoControl(SERVO_HORIZONTAL, progress);
+        } else if (seekBar.equals(mSeekBarVt)) {
+            servoControl(SERVO_VERTICAL, progress);
+        }
     }
 
     /////////////////////////////////【Server Response】/////////////////////////////////////
@@ -240,21 +271,7 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
 
     @Override
     public void onSucceed(int what, Response<ControlResponse> response) {
-        controlSuccess(response.get());
-        switch (what) {
-            case REQ_CONNECT_TEST:
-                LogUtils.e("connectTest_onSucceed");
-                break;
-
-            case REQ_CAR_CONTROL:
-                LogUtils.e("carControl_onSucceed");
-                break;
-
-            case REQ_SERVO_CONTROL_HR:
-            case REQ_SERVO_CONTROL_VT:
-                LogUtils.e("servoControl_onSucceed");
-                break;
-        }
+        controlSuccess(what, response.get());
     }
 
     @Override
