@@ -1,12 +1,17 @@
 package cn.whoisaa.raspberrypi.activity;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatSeekBar;
 import android.text.TextUtils;
+import android.view.View;
+import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.yanzhenjie.nohttp.rest.OnResponseListener;
 import com.yanzhenjie.nohttp.rest.Response;
@@ -31,21 +36,41 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
     //舵机控制
     public static final int SERVO_HORIZONTAL = 0;
     public static final int SERVO_VERTICAL = 1;
+    //默认连拍张数
+    public static final int DEFAULT_CONTINUOUS_SHOT = 5;
+    //默认连拍间隔时长：6秒
+    public static final int DEFAULT_CONTINUOUS_SHOT_DELAY = 6;
+    //默认录制时长：60秒
+    public static final int DEFAULT_RECORD_SECONDS = 60;
 
-    public static final int REQ_CONNECT_TEST = 101;
-    public static final int REQ_CAR_CONTROL = 201;
-    public static final int REQ_SERVO_CONTROL_HR = 301;
-    public static final int REQ_SERVO_CONTROL_VT = 302;
+    public static final int MSG_RECORD = 1000;
+
 
     private TextView tvConnectStatus;
     private RockerView mRockerView;
     private TextView tvServoHrStatus, tvServoVtStatus;
     private AppCompatSeekBar mSeekBarHr, mSeekBarVt;
 
-    private int mHrAngle, mVtAngle;
+    private Button btnTakePic, btnContinuousShot;
+    private Button btnStartRecord, btnStopRecord;
+
     private String mCurAction;
-    private boolean mRunning;
     private boolean mConnectSuccess;
+
+    private int mRecordTime;
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case MSG_RECORD:
+                    btnStopRecord.setText(String.format(getString(R.string.record_time), mRecordTime));
+                    mRecordTime ++;
+                    sendEmptyMessageDelayed(MSG_RECORD, 1000);
+                    break;
+            }
+        }
+    };
 
 
     @Override
@@ -78,6 +103,11 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
         mSeekBarVt = findViewById(R.id.sb_servo_vertical);
         mSeekBarHr.setOnSeekBarChangeListener(this);
         mSeekBarVt.setOnSeekBarChangeListener(this);
+        //拍照录像相关
+        btnTakePic = findViewById(R.id.btn_take_picture);
+        btnContinuousShot = findViewById(R.id.btn_continuous_shot);
+        btnStartRecord = findViewById(R.id.btn_start_record);
+        btnStopRecord = findViewById(R.id.btn_stop_record);
     }
 
     @Override
@@ -137,7 +167,7 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
         }
 
         switch (what) {
-            case REQ_CONNECT_TEST:
+            case RspiApi.REQ_CONNECT_TEST:
                 LogUtils.e("connectTest_onSucceed");
                 if(response.getData() != null && response.getData().getHrAngle() >= 0) {
                     mSeekBarHr.setProgress(response.getData().getHrAngle());
@@ -148,13 +178,36 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
                 }
                 break;
 
-            case REQ_CAR_CONTROL:
+            case RspiApi.REQ_CAR_CONTROL:
                 LogUtils.e("carControl_onSucceed");
                 break;
 
-            case REQ_SERVO_CONTROL_HR:
-            case REQ_SERVO_CONTROL_VT:
+            case RspiApi.REQ_SERVO_CONTROL_HR:
+            case RspiApi.REQ_SERVO_CONTROL_VT:
                 LogUtils.e("servoControl_onSucceed");
+                break;
+
+            case RspiApi.REQ_TAKE_PICTURE:
+                //拍照成功
+                // TODO: 2017/12/25 获得拍照文件链接地址
+                btnTakePic.setEnabled(true);
+                break;
+
+            case RspiApi.REQ_CONTINUOUS_SHOT:
+                //连拍成功
+                btnContinuousShot.setEnabled(true);
+                // TODO: 2017/12/25 获得拍照文件链接地址
+                break;
+
+            case RspiApi.REQ_START_RECORD:
+                //开始录制成功
+                btnStopRecord.setEnabled(true);
+                mHandler.sendEmptyMessage(MSG_RECORD);
+                break;
+
+            case RspiApi.REQ_STOP_RECORD:
+                //停止录制成功
+                // TODO: 2017/12/25 获得录制文件链接地址
                 break;
         }
     }
@@ -166,24 +219,47 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
     private void controlFailed(int what, Response<ControlResponse> response) {
         mConnectSuccess = false;
         switch (what) {
-            case REQ_CONNECT_TEST:
+            case RspiApi.REQ_CONNECT_TEST:
                 LogUtils.e("connectTest_onFailed");
                 mConnectSuccess = false;
                 tvConnectStatus.setText(getString(R.string.server_status_failed));
                 break;
 
-            case REQ_CAR_CONTROL:
+            case RspiApi.REQ_CAR_CONTROL:
                 LogUtils.e("carControl_onFailed");
                 break;
 
-            case REQ_SERVO_CONTROL_HR:
+            case RspiApi.REQ_SERVO_CONTROL_HR:
                 LogUtils.e("servo_horizontal_failed");
                 tvServoHrStatus.setText(getString(R.string.servo_horizontal_failed));
                 break;
 
-            case REQ_SERVO_CONTROL_VT:
+            case RspiApi.REQ_SERVO_CONTROL_VT:
                 LogUtils.e("servo_vertical_failed");
                 tvServoVtStatus.setText(getString(R.string.servo_vertical_failed));
+                break;
+
+            case RspiApi.REQ_TAKE_PICTURE:
+                //拍照失败
+                Toast.makeText(this, getString(R.string.take_picture_failed), Toast.LENGTH_SHORT).show();
+                btnTakePic.setEnabled(true);
+                break;
+
+            case RspiApi.REQ_CONTINUOUS_SHOT:
+                //连拍失败
+                Toast.makeText(this, getString(R.string.continuous_shot_failed), Toast.LENGTH_SHORT).show();
+                btnContinuousShot.setEnabled(true);
+                break;
+
+            case RspiApi.REQ_START_RECORD:
+                //开始录制失败
+                Toast.makeText(this, getString(R.string.start_record_failed), Toast.LENGTH_SHORT).show();
+                btnStartRecord.setEnabled(true);
+                break;
+
+            case RspiApi.REQ_STOP_RECORD:
+                //停止录制失败
+                Toast.makeText(this, getString(R.string.stop_record_failed), Toast.LENGTH_SHORT).show();
                 break;
         }
     }
@@ -200,7 +276,7 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
      * 测试连接服务器
      */
     private void connectTest() {
-        RspiApi.getInstance().connectTest(REQ_CONNECT_TEST, this);
+        RspiApi.getInstance().connectTest(RspiApi.REQ_CONNECT_TEST, this);
     }
 
     /**
@@ -210,8 +286,7 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
     private void carControl(String action) {
         LogUtils.e("小车方向：" + action);
         if(isConnectSuccess() && !TextUtils.isEmpty(action) && (mCurAction == null || (mCurAction != null && !mCurAction.equals(action)))) {
-            mRunning = !action.equals(CAR_STOP);
-            RspiApi.getInstance().carControl(REQ_CAR_CONTROL, action, this);
+            RspiApi.getInstance().carControl(RspiApi.REQ_CAR_CONTROL, action, this);
             mCurAction = action;
         }
     }
@@ -225,14 +300,52 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
         if(isConnectSuccess()) {
             if(orientation == SERVO_HORIZONTAL) {
                 LogUtils.e("水平舵机转动角度：" + angle);
-                RspiApi.getInstance().servoControl(REQ_SERVO_CONTROL_HR, orientation, angle, this);
-                mHrAngle = angle;
+                RspiApi.getInstance().servoControl(RspiApi.REQ_SERVO_CONTROL_HR, orientation, angle, this);
             } else if(orientation == SERVO_VERTICAL) {
                 LogUtils.e("垂直舵机转动角度：" + angle);
-                RspiApi.getInstance().servoControl(REQ_SERVO_CONTROL_VT, orientation, angle, this);
-                mVtAngle = angle;
+                RspiApi.getInstance().servoControl(RspiApi.REQ_SERVO_CONTROL_VT, orientation, angle, this);
             }
         }
+    }
+
+    /**
+     * 拍一张照
+     * @param view
+     */
+    public void takePicture(View view) {
+        view.setEnabled(false);
+        RspiApi.getInstance().takePicture(RspiApi.REQ_TAKE_PICTURE, this);
+    }
+
+    /**
+     * 连拍五张
+     * @param view
+     */
+    public void continuousShot(View view) {
+        view.setEnabled(false);
+        RspiApi.getInstance().continuousShot(RspiApi.REQ_CONTINUOUS_SHOT, DEFAULT_CONTINUOUS_SHOT, DEFAULT_CONTINUOUS_SHOT_DELAY, this);
+    }
+
+    /**
+     * 开始录制
+     * @param view
+     */
+    public void startRecord(View view) {
+        view.setEnabled(false);
+        RspiApi.getInstance().startRecord(RspiApi.REQ_START_RECORD, DEFAULT_RECORD_SECONDS, this);
+    }
+
+    /**
+     * 停止录制
+     * @param view
+     */
+    public void stopRecord(View view) {
+        view.setEnabled(false);
+        btnStartRecord.setEnabled(true);
+        mHandler.removeMessages(MSG_RECORD);
+        btnStopRecord.setText(getString(R.string.stop_record));
+        mRecordTime = 0;
+        RspiApi.getInstance().stopRecord(RspiApi.REQ_STOP_RECORD, this);
     }
 
 
@@ -263,7 +376,7 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
     @Override
     public void onStart(int what) {
         switch (what) {
-            case REQ_CONNECT_TEST:
+            case RspiApi.REQ_CONNECT_TEST:
                 tvConnectStatus.setText(getString(R.string.server_connecting));
                 break;
         }

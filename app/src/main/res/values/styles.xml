@@ -8,4 +8,12 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="VerticalSeekBar"/>
+
+    <style name="VerticalSeekBar.Vertical">
+        <item name="orientation">vertical</item>
+        <item name="android:maxWidth">50dp</item>
+        <item name="android:minWidth">20dp</item>
+    </style>
+
 </resources>

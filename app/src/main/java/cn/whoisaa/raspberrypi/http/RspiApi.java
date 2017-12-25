@@ -7,6 +7,15 @@ import com.yanzhenjie.nohttp.rest.RequestQueue;
 
 public class RspiApi {
 
+    public static final int REQ_CONNECT_TEST = 101;
+    public static final int REQ_CAR_CONTROL = 201;
+    public static final int REQ_SERVO_CONTROL_HR = 301;
+    public static final int REQ_SERVO_CONTROL_VT = 302;
+    public static final int REQ_TAKE_PICTURE = 401;
+    public static final int REQ_CONTINUOUS_SHOT = 402;
+    public static final int REQ_START_RECORD = 403;
+    public static final int REQ_STOP_RECORD = 404;
+
     /**
      * 单例对象
      */
@@ -86,6 +95,52 @@ public class RspiApi {
         Request<ControlResponse> request = new JavaBeanRequest(getApiUrl(UrlMgr.RSPI_SERVO_CONTROL), ControlResponse.class);
         request.add("orientation", orientation);
         request.add("angle", angle);
+        mRequestQueue.add(what, request, onResponseListener);
+    }
+
+    /**
+     * 拍一张照
+     * @param what
+     * @param onResponseListener
+     */
+    public void takePicture(int what, OnResponseListener onResponseListener) {
+        Request<ControlResponse> request = new JavaBeanRequest(getApiUrl(UrlMgr.RSPI_TAKE_PICTURE), ControlResponse.class);
+        mRequestQueue.add(what, request, onResponseListener);
+    }
+
+    /**
+     * 连拍，默认五张
+     * @param what
+     * @param count
+     * @param delay
+     * @param onResponseListener
+     */
+    public void continuousShot(int what, int count, long delay, OnResponseListener onResponseListener) {
+        Request<ControlResponse> request = new JavaBeanRequest(getApiUrl(UrlMgr.RSPI_CONTINUOUS_SHOT), ControlResponse.class);
+        request.add("count", count);
+        request.add("delay", delay);
+        mRequestQueue.add(what, request, onResponseListener);
+    }
+
+    /**
+     * 开始录像
+     * @param what
+     * @param seconds
+     * @param onResponseListener
+     */
+    public void startRecord(int what, long seconds, OnResponseListener onResponseListener) {
+        Request<ControlResponse> request = new JavaBeanRequest(getApiUrl(UrlMgr.RSPI_START_RECORD), ControlResponse.class);
+        request.add("seconds", seconds);
+        mRequestQueue.add(what, request, onResponseListener);
+    }
+
+    /**
+     * 停止录像
+     * @param what
+     * @param onResponseListener
+     */
+    public void stopRecord(int what, OnResponseListener onResponseListener) {
+        Request<ControlResponse> request = new JavaBeanRequest(getApiUrl(UrlMgr.RSPI_STOP_RECORD), ControlResponse.class);
         mRequestQueue.add(what, request, onResponseListener);
     }
 

@@ -29,7 +29,7 @@
         app:rockerBackground="@mipmap/ic_left_ctrl"/>
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="@dimen/dist_130"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
@@ -38,6 +38,7 @@
 
         <cn.whoisaa.raspberrypi.widget.VerticalSeekBar
             android:id="@+id/sb_servo_vertical"
+            style="@style/VerticalSeekBar.Vertical"
             android:layout_width="@dimen/dist_20"
             android:layout_height="@dimen/dist_250"
             android:max="180"
@@ -45,7 +46,7 @@
 
         <TextView
             android:id="@+id/tv_servo_vertical"
-            android:layout_width="@dimen/dist_130"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:text="垂直舵机"
@@ -61,10 +62,61 @@
         android:gravity="center_horizontal"
         android:orientation="vertical">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_take_picture"
+                android:layout_width="@dimen/dist_0"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:onClick="takePicture"
+                android:text="拍照"/>
+
+            <Button
+                android:id="@+id/btn_continuous_shot"
+                android:layout_width="@dimen/dist_0"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:onClick="continuousShot"
+                android:text="连拍五张"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/dist_10"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_start_record"
+                android:layout_width="@dimen/dist_0"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:onClick="startRecord"
+                android:text="开始录像"/>
+
+            <Button
+                android:id="@+id/btn_stop_record"
+                android:layout_width="@dimen/dist_0"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:enabled="false"
+                android:gravity="center"
+                android:onClick="stopRecord"
+                android:text="停止录像"/>
+        </LinearLayout>
+
         <android.support.v7.widget.AppCompatSeekBar
             android:id="@+id/sb_servo_horizontal"
             android:layout_width="@dimen/dist_250"
             android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/dist_30"
             android:max="180"
             android:progress="0"/>
 

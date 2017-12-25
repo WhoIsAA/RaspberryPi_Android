@@ -10,4 +10,10 @@
     <string name="servo_horizontal_failed">水平角度：Failed</string>
     <string name="servo_vertical">垂直角度：%d</string>
     <string name="servo_vertical_failed">垂直角度：Failed</string>
+    <string name="stop_record">停止录像</string>
+    <string name="record_time">停止录像(%ds)</string>
+    <string name="take_picture_failed">拍照失败</string>
+    <string name="continuous_shot_failed">连拍失败</string>
+    <string name="start_record_failed">开始录像失败</string>
+    <string name="stop_record_failed">停止录像失败</string>
 </resources>

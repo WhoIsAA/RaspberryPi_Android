@@ -16,6 +16,10 @@ public class UrlMgr {
     public static final String RSPI_CONNECT_TEST = "/carpi/connect_test";
     public static final String RSPI_CAR_CONTROL = "/carpi/car_control";
     public static final String RSPI_SERVO_CONTROL = "/carpi/servo_control";
+    public static final String RSPI_TAKE_PICTURE = "/carpi/take_picture";
+    public static final String RSPI_CONTINUOUS_SHOT = "/carpi/continuous_shot";
+    public static final String RSPI_START_RECORD = "/carpi/start_record";
+    public static final String RSPI_STOP_RECORD = "/carpi/stop_record";
 
 
 
