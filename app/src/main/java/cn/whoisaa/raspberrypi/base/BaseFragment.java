@@ -1,90 +1,99 @@
 package cn.whoisaa.raspberrypi.base;
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.IdRes;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v4.app.Fragment;
 import android.text.TextUtils;
-import android.widget.Toast;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 
 import java.util.List;
 
 import cn.whoisaa.raspberrypi.R;
-import cn.whoisaa.raspberrypi.utils.LogUtils;
-import cn.whoisaa.raspberrypi.widget.LoadingDialog;
 
 /**
- * @Description Activity基类
+ * @Description
  * @Author AA
- * @DateTime 2017/11/27 下午2:37
+ * @DateTime 2017/12/29 上午9:58
  */
-public class BaseActivity extends AppCompatActivity {
+public abstract class BaseFragment extends Fragment {
 
     /**
-     * 当前Activity上下文
+     * 当前Fragment父视图
      */
-    private Context mContext;
+    private View mView;
+
+    /** 保存Fragmetn重建后的数据 */
+    private Bundle mSavedInstanceState;
 
     /**
-     * 加载中动画
+     * 权限请求码
      */
-    private LoadingDialog mLoadingDialog;
-
-
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mContext = this;
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (mLoadingDialog != null) {
-            mLoadingDialog.dismiss();
-        }
-    }
+    private int mRequestCode;
 
     /**
-     * 获得上下文
+     * 控件是否初始化完成
+     */
+    private boolean isViewCreated;
+
+    /**
+     * 数据是否已加载完毕
+     */
+    private boolean isLoadDataCompleted;
+
+    /**
+     * 获取当前Fragment视图ID
      * @return
      */
-    protected Context getContext() {
-        return mContext;
-    }
+    protected abstract int getLayoutId();
 
     /**
-     * 弹出Toast提示
-     * @param text 提示内容
+     * 初始化数据
      */
-    protected void toast(String text) {
-        if(this.isFinishing()) {
-            return;
+    protected abstract void initData();
+
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        mView = inflater.inflate(getLayoutId(), container, false);
+//        //绑定注解类
+//        ButterKnife.bind(this, mView);
+        return mView;
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        isViewCreated = true;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        if(getUserVisibleHint()) {
+            mSavedInstanceState = savedInstanceState;
+            initData();
+            isLoadDataCompleted = true;
         }
+    }
 
-        if(!TextUtils.isEmpty(text)) {
-            Toast.makeText(mContext, text, Toast.LENGTH_SHORT).show();
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if(isVisibleToUser && isViewCreated && !isLoadDataCompleted) {
+            initData();
+            isLoadDataCompleted = true;
         }
     }
 
-    /**
-     * 弹出Toast提示
-     * @param resId 提示内容ID
-     */
-    protected void toast(int resId) {
-        String text = getString(resId);
-        toast(text);
-    }
-
-    /**
-     * 记录错误日志
-     * @param log
-     */
-    protected void logError(String log) {
-        LogUtils.e(log);
+    protected <T extends View> T findViewById(@IdRes int id) {
+        return mView.findViewById(id);
     }
 
     /**
@@ -92,7 +101,9 @@ public class BaseActivity extends AppCompatActivity {
      * @param showText 对话框显示内容
      */
     protected void showLoading(String showText) {
-        showLoading(showText, true);
+        if(getActivity() instanceof BaseActivity) {
+            ((BaseActivity) getActivity()).showLoading(showText);
+        }
     }
 
     /**
@@ -101,17 +112,8 @@ public class BaseActivity extends AppCompatActivity {
      * @param canCancel 是否可以点击其他区域取消对话框
      */
     protected void showLoading(String showText, boolean canCancel) {
-        if(this.isFinishing()) {
-            return;
-        }
-
-        if(mLoadingDialog == null) {
-            mLoadingDialog = new LoadingDialog(this);
-        }
-        mLoadingDialog.setShowText(showText);
-        mLoadingDialog.setCanCancel(canCancel);
-        if(!mLoadingDialog.isShowing()) {
-            mLoadingDialog.show();
+        if(getActivity() instanceof BaseActivity) {
+            ((BaseActivity) getActivity()).showLoading(showText, canCancel);
         }
     }
 
@@ -119,13 +121,8 @@ public class BaseActivity extends AppCompatActivity {
      * 隐藏加载中视图
      */
     protected void hideLoading() {
-        if(this.isFinishing()) {
-            return;
-        }
-
-        if(mLoadingDialog != null && mLoadingDialog.isShowing()) {
-            mLoadingDialog.dismiss();
-            mLoadingDialog = null;
+        if(getActivity() instanceof BaseActivity) {
+            ((BaseActivity) getActivity()).hideLoading();
         }
     }
 
@@ -134,7 +131,40 @@ public class BaseActivity extends AppCompatActivity {
      * @return
      */
     protected boolean isLoadingDialogShowing() {
-        return mLoadingDialog != null && mLoadingDialog.isShowing();
+        if(getActivity() instanceof BaseActivity) {
+            return ((BaseActivity) getActivity()).isLoadingDialogShowing();
+        }
+        return false;
+    }
+
+    /**
+     * 弹出Toast提示
+     * @param text 提示内容
+     */
+    protected void toast(String text) {
+        if(getActivity() instanceof BaseActivity) {
+            ((BaseActivity) getActivity()).toast(text);
+        }
+    }
+
+    /**
+     * 弹出Toast提示
+     * @param resId 提示内容ID
+     */
+    protected void toast(int resId) {
+        if(getActivity() instanceof BaseActivity) {
+            ((BaseActivity) getActivity()).toast(resId);
+        }
+    }
+
+    /**
+     * 记录错误日志
+     * @param log
+     */
+    protected void logError(String log) {
+        if(getActivity() instanceof BaseActivity) {
+            ((BaseActivity)getActivity()).logError(log);
+        }
     }
 
     /**
@@ -164,7 +194,7 @@ public class BaseActivity extends AppCompatActivity {
      * @param cancelListener 取消按钮点击事件
      */
     protected void showTipsDialog(String content, String confirmText, DialogInterface.OnClickListener confirmListener, DialogInterface.OnClickListener cancelListener) {
-        showTipsDialogWithTitle(null, content, confirmText, confirmListener, getString(R.string.cancel), cancelListener);
+        showTipsDialogWithTitle(null, content, confirmText, confirmListener, null, cancelListener);
     }
 
     /**
@@ -197,7 +227,7 @@ public class BaseActivity extends AppCompatActivity {
      * @param cancelListener 取消按钮点击事件
      */
     protected void showTipsDialogWithTitle(String title, String content, DialogInterface.OnClickListener confirmListener, DialogInterface.OnClickListener cancelListener) {
-        showTipsDialogWithTitle(title, content, getString(R.string.confirm), confirmListener, getString(R.string.cancel), cancelListener);
+        showTipsDialogWithTitle(title, content, getString(R.string.confirm), confirmListener, null, cancelListener);
     }
 
     /**
@@ -221,16 +251,9 @@ public class BaseActivity extends AppCompatActivity {
      * @param cancelListener 取消按钮点击事件
      */
     protected void showTipsDialogWithTitle(String title, String content, String confirmText, DialogInterface.OnClickListener confirmListener, String cancelText, DialogInterface.OnClickListener cancelListener) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        if(isNotEmptyString(title)) {
-            builder.setTitle(title);
+        if(getActivity() instanceof BaseActivity) {
+            ((BaseActivity)getActivity()).showTipsDialogWithTitle(title, content, confirmText, confirmListener, cancelText, cancelListener);
         }
-        builder.setMessage(content);
-        builder.setPositiveButton(confirmText, confirmListener);
-        if(isNotEmptyString(cancelText)) {
-            builder.setNegativeButton(cancelText, cancelListener);
-        }
-        builder.create().show();
     }
 
     /**
@@ -258,11 +281,9 @@ public class BaseActivity extends AppCompatActivity {
      * @param listener 列表项点击事件
      */
     protected void showItemsDialogWithTitle(String title, int itemsId, DialogInterface.OnClickListener listener) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        if(isNotEmptyString(title)) {
-            builder.setTitle(title);
+        if(getActivity() instanceof BaseActivity) {
+            ((BaseActivity)getActivity()).showItemsDialogWithTitle(title, itemsId, listener);
         }
-        builder.setItems(itemsId, listener).create().show();
     }
 
     /**
@@ -272,41 +293,9 @@ public class BaseActivity extends AppCompatActivity {
      * @param listener 列表项点击事件
      */
     protected void showItemsDialogWithTitle(String title, String[] itemsArray, DialogInterface.OnClickListener listener) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        if(isNotEmptyString(title)) {
-            builder.setTitle(title);
+        if(getActivity() instanceof BaseActivity) {
+            ((BaseActivity)getActivity()).showItemsDialogWithTitle(title, itemsArray, listener);
         }
-        builder.setItems(itemsArray, listener).create().show();
-    }
-
-    protected void pushActivity(Intent intent) {
-        startActivity(intent);
-    }
-
-    protected void pushActivity(Class<?> mClass) {
-        startActivity(new Intent(mContext, mClass));
-    }
-
-    protected void pushActivity(Intent intent, boolean finishSelf) {
-        pushActivity(intent);
-
-        if (finishSelf)
-            finish();
-    }
-
-    protected void pushActivity(Class<?> mClass, boolean finishSelf) {
-        pushActivity(mClass);
-
-        if (finishSelf)
-            finish();
-    }
-
-    protected void pushActivityForResult(Intent intent, int requestCode) {
-        startActivityForResult(intent, requestCode);
-    }
-
-    protected void pushActivityForResult(Class<?> mClass, int requestCode) {
-        startActivityForResult(new Intent(mContext, mClass), requestCode);
     }
 
     /**
@@ -334,5 +323,29 @@ public class BaseActivity extends AppCompatActivity {
      */
     protected boolean isEmptyList(List<?> list) {
         return list == null || list.size() <= 0;
+    }
+
+    public void pushActivity(Intent intent) {
+        if(getActivity() instanceof BaseActivity) {
+            ((BaseActivity)getActivity()).pushActivity(intent);
+        }
+    }
+
+    public void pushActivity(Class<?> mClass) {
+        if(getActivity() instanceof BaseActivity) {
+            ((BaseActivity)getActivity()).pushActivity(mClass);
+        }
+    }
+
+    public void pushActivityForResult(Intent intent, int requestCode) {
+        if(getActivity() instanceof BaseActivity) {
+            this.startActivityForResult(intent, requestCode);
+        }
+    }
+
+    public void pushActivityForResult(Class<?> mClass, int requestCode) {
+        if(getActivity() instanceof BaseActivity) {
+            this.startActivityForResult(new Intent(getActivity(), mClass), requestCode);
+        }
     }
 }

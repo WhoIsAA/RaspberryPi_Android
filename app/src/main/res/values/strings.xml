@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">RaspberryPi</string>
 
+    <string name="confirm">确定</string>
+    <string name="cancel">取消</string>
+    <string name="loading">正在加载...</string>
     <string name="server_connecting">正在连接服务器...</string>
     <string name="server_status_success">服务器连接状态：Success</string>
     <string name="server_status_failed">服务器连接状态：Failed</string>
@@ -10,8 +13,8 @@
     <string name="servo_horizontal_failed">水平角度：Failed</string>
     <string name="servo_vertical">垂直角度：%d</string>
     <string name="servo_vertical_failed">垂直角度：Failed</string>
-    <string name="stop_record">停止录像</string>
-    <string name="record_time">停止录像(%ds)</string>
+    <string name="record_video">录像</string>
+    <string name="record_time">录像(%ds)</string>
     <string name="take_picture_failed">拍照失败</string>
     <string name="continuous_shot_failed">连拍失败</string>
     <string name="start_record_failed">开始录像失败</string>

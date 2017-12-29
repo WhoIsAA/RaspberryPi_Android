@@ -2,78 +2,67 @@ package cn.whoisaa.raspberrypi.widget;
 
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.support.v7.widget.AppCompatSeekBar;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
-import cn.whoisaa.raspberrypi.R;
 
 /**
- * @Description
+ * @Description https://github.com/nobukihiramine/VerticalSeekBarTest
  * @Author AA
  * @DateTime 2017/12/18 上午11:07
  */
 public class VerticalSeekBar extends AppCompatSeekBar {
 
-    private static final int HORIZONTAL_VALUE = 0;
-
-    private boolean mIsHorizontal;
-    private int mLastProgress;
-    private OnSeekBarChangeListener mOnChangeListener;
-
     public VerticalSeekBar(Context context) {
         super(context);
-    }
-
-    public VerticalSeekBar(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init(attrs, 0);
+        setBackground(null);    // Ripple Effect(タッチした場所から波紋状に広がるエフェクト)が追従しないので、OFFにする
     }
 
     public VerticalSeekBar(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        init(attrs, defStyle);
+        setBackground(null);    // Ripple Effect(タッチした場所から波紋状に広がるエフェクト)が追従しないので、OFFにする
     }
 
-    private void init(AttributeSet attrs, int defStyle) {
-        TypedArray array = getContext().getTheme().obtainStyledAttributes(
-                attrs, R.styleable.VerticalSeekBar, defStyle, 0
-        );
-        int orientationValue = array.getInt(R.styleable.VerticalSeekBar_orientation, HORIZONTAL_VALUE);
-        mIsHorizontal = orientationValue == HORIZONTAL_VALUE;
+    public VerticalSeekBar(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        setBackground(null);    // Ripple Effect(タッチした場所から波紋状に広がるエフェクト)が追従しないので、OFFにする
+    }
 
-        array.recycle();
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(h, w, oldh, oldw);
     }
 
     @Override
+    protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(heightMeasureSpec, widthMeasureSpec);
+        setMeasuredDimension(getMeasuredHeight(), getMeasuredWidth());
+    }
+
     protected void onDraw(Canvas c) {
-        if (!mIsHorizontal) {
-            c.rotate(-90);
-            c.translate(-getHeight(), 0);
-        }
+        // 今、キャンバスの座標系は、原点がシークバー表示領域の左上、X軸が右向き(→)、Y軸が下向き(↓)
+        c.rotate(-90);    // キャンバスの座標系を半時計周りに90度回転。
+        // 今、キャンバスの座標系は、原点がシークバー表示領域の左上、X軸が上向き(↑)、Y軸が右向き(→)
+        c.translate(-getHeight(), 0);    // キャンバスの座標系を下に表示領域高さ分下げる。今、上向きがX軸なので、X軸方向に-getHeight()移動させる。
+        // 今、キャンバスの座標系は、原点がシークバー表示領域の左下、X軸が上向き(↑)、Y軸が右向き(→)
+        // 結果、シークバーは縦向きに表示される。下端がゼロ、上端がマックスとなる。
+
         super.onDraw(c);
     }
 
-    @SuppressWarnings("SuspiciousNameCombination")
-    @Override
-    protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (mIsHorizontal) {
-            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        } else {
-            super.onMeasure(heightMeasureSpec, widthMeasureSpec);
-            setMeasuredDimension(getMeasuredHeight(), getMeasuredWidth());
-        }
-    }
+    private OnSeekBarChangeListener onChangeListener;
 
     @Override
-    protected void onSizeChanged(int w, int h, int oldW, int oldH) {
-        if (mIsHorizontal) {
-            super.onSizeChanged(w, h, oldW, oldH);
-        } else {
-            // Swap dimensions
-            super.onSizeChanged(h, w, oldH, oldW);
-        }
+    public void setOnSeekBarChangeListener(OnSeekBarChangeListener onChangeListener) {
+        this.onChangeListener = onChangeListener;
+    }
+
+    private int lastProgress = 0;
+
+    @Override
+    public synchronized void setProgress(int progress) {
+        super.setProgress(progress);
+        onSizeChanged(getWidth(), getHeight(), 0, 0);
     }
 
     @Override
@@ -82,46 +71,20 @@ public class VerticalSeekBar extends AppCompatSeekBar {
             return false;
         }
 
-        if (mIsHorizontal) {
-            return super.onTouchEvent(event);
-        }
-
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                if (mOnChangeListener != null) {
-                    mOnChangeListener.onStartTrackingTouch(this);
-                }
+                onChangeListener.onStartTrackingTouch(this);
+                setProgressAndThumb(getMax() - (int) (getMax() * event.getY() / getHeight()));
                 setPressed(true);
                 setSelected(true);
                 break;
             case MotionEvent.ACTION_MOVE:
-                super.onTouchEvent(event);
-                int progress = getMax() - (int) (getMax() * event.getY() / getHeight());
-
-                // Ensure progress stays within boundaries
-                if (progress < 0) {
-                    progress = 0;
-                }
-                if (progress > getMax()) {
-                    progress = getMax();
-                }
-                setProgress(progress); // Draw progress
-                if (progress != mLastProgress) {
-                    // Only enact listener if the progress has actually changed
-                    mLastProgress = progress;
-                    if (mOnChangeListener != null) {
-                        mOnChangeListener.onProgressChanged(this, progress, true);
-                    }
-                }
-
-                onSizeChanged(getWidth(), getHeight(), 0, 0);
+                setProgressAndThumb(getMax() - (int) (getMax() * event.getY() / getHeight()));
                 setPressed(true);
                 setSelected(true);
                 break;
             case MotionEvent.ACTION_UP:
-                if (mOnChangeListener != null) {
-                    mOnChangeListener.onStopTrackingTouch(this);
-                }
+                onChangeListener.onStopTrackingTouch(this);
                 setPressed(false);
                 setSelected(false);
                 break;
@@ -134,8 +97,18 @@ public class VerticalSeekBar extends AppCompatSeekBar {
         return true;
     }
 
-    @Override
-    public void setOnSeekBarChangeListener(OnSeekBarChangeListener onChangeListener) {
-        mOnChangeListener = onChangeListener;
+    public synchronized void setProgressAndThumb(int progress) {
+        if (progress < 0) {
+            progress = 0;
+        }
+        if (progress > getMax()) {
+            progress = getMax();
+        }
+        setProgress(progress);    // シーク位置の更新
+        onSizeChanged(getWidth(), getHeight(), 0, 0);    // 描画要素の更新
+        if (progress != lastProgress) {    // シーク位置が変わった場合は、onProgressChanged()をコールする。
+            lastProgress = progress;
+            onChangeListener.onProgressChanged(this, progress, true);
+        }
     }
 }

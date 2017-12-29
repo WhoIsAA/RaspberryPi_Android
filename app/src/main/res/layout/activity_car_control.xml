@@ -38,7 +38,6 @@
 
         <cn.whoisaa.raspberrypi.widget.VerticalSeekBar
             android:id="@+id/sb_servo_vertical"
-            style="@style/VerticalSeekBar.Vertical"
             android:layout_width="@dimen/dist_20"
             android:layout_height="@dimen/dist_250"
             android:max="180"
@@ -102,14 +101,13 @@
                 android:text="开始录像"/>
 
             <Button
-                android:id="@+id/btn_stop_record"
+                android:id="@+id/btn_preview"
                 android:layout_width="@dimen/dist_0"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:enabled="false"
                 android:gravity="center"
-                android:onClick="stopRecord"
-                android:text="停止录像"/>
+                android:onClick="preview"
+                android:text="预览"/>
         </LinearLayout>
 
         <android.support.v7.widget.AppCompatSeekBar

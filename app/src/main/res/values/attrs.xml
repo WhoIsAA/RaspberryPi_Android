@@ -7,12 +7,4 @@
         <attr name="rockerRadius" format="dimension" />
     </declare-styleable>
 
-    <declare-styleable name="VerticalSeekBar">
-        <attr name="orientation" />
-    </declare-styleable>
-
-    <attr name="orientation" format="enum">
-        <enum name="horizontal" value="0"/>
-        <enum name="vertical" value="1"/>
-    </attr>
 </resources>

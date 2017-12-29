@@ -4,26 +4,25 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatSeekBar;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.yanzhenjie.nohttp.rest.OnResponseListener;
 import com.yanzhenjie.nohttp.rest.Response;
 
 import cn.whoisaa.raspberrypi.R;
+import cn.whoisaa.raspberrypi.base.BaseActivity;
 import cn.whoisaa.raspberrypi.http.ControlResponse;
 import cn.whoisaa.raspberrypi.http.RspiApi;
 import cn.whoisaa.raspberrypi.utils.LogUtils;
 import cn.whoisaa.raspberrypi.widget.RockerView;
 
 
-public class CarControlActivity extends AppCompatActivity implements OnResponseListener<ControlResponse>, SeekBar.OnSeekBarChangeListener {
+public class CarControlActivity extends BaseActivity implements OnResponseListener<ControlResponse>, SeekBar.OnSeekBarChangeListener {
 
     //小车控制
     public static final String CAR_FORWARD = "forward";
@@ -43,6 +42,7 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
     //默认录制时长：60秒
     public static final int DEFAULT_RECORD_SECONDS = 60;
 
+    //Handler消息
     public static final int MSG_RECORD = 1000;
 
 
@@ -52,7 +52,7 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
     private AppCompatSeekBar mSeekBarHr, mSeekBarVt;
 
     private Button btnTakePic, btnContinuousShot;
-    private Button btnStartRecord, btnStopRecord;
+    private Button btnRecordVideo;
 
     private String mCurAction;
     private boolean mConnectSuccess;
@@ -64,14 +64,19 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
             super.handleMessage(msg);
             switch (msg.what) {
                 case MSG_RECORD:
-                    btnStopRecord.setText(String.format(getString(R.string.record_time), mRecordTime));
                     mRecordTime ++;
-                    sendEmptyMessageDelayed(MSG_RECORD, 1000);
+                    btnRecordVideo.setText(String.format(getString(R.string.record_time), mRecordTime));
+                    if(mRecordTime == DEFAULT_RECORD_SECONDS) {
+                        btnRecordVideo.setText(getString(R.string.record_video));
+                        btnRecordVideo.setEnabled(true);
+                        removeMessages(MSG_RECORD);
+                    } else {
+                        sendEmptyMessageDelayed(MSG_RECORD, 1000);
+                    }
                     break;
             }
         }
     };
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,11 +108,11 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
         mSeekBarVt = findViewById(R.id.sb_servo_vertical);
         mSeekBarHr.setOnSeekBarChangeListener(this);
         mSeekBarVt.setOnSeekBarChangeListener(this);
+
         //拍照录像相关
         btnTakePic = findViewById(R.id.btn_take_picture);
         btnContinuousShot = findViewById(R.id.btn_continuous_shot);
-        btnStartRecord = findViewById(R.id.btn_start_record);
-        btnStopRecord = findViewById(R.id.btn_stop_record);
+        btnRecordVideo = findViewById(R.id.btn_start_record);
     }
 
     @Override
@@ -152,6 +157,7 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
      */
     private void controlSuccess(int what, @NonNull ControlResponse response) {
         if(response == null) {
+            controlFailed(what, null);
             return;
         }
 
@@ -199,15 +205,9 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
                 // TODO: 2017/12/25 获得拍照文件链接地址
                 break;
 
-            case RspiApi.REQ_START_RECORD:
+            case RspiApi.REQ_RECORD_VIDEO:
                 //开始录制成功
-                btnStopRecord.setEnabled(true);
                 mHandler.sendEmptyMessage(MSG_RECORD);
-                break;
-
-            case RspiApi.REQ_STOP_RECORD:
-                //停止录制成功
-                // TODO: 2017/12/25 获得录制文件链接地址
                 break;
         }
     }
@@ -241,25 +241,20 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
 
             case RspiApi.REQ_TAKE_PICTURE:
                 //拍照失败
-                Toast.makeText(this, getString(R.string.take_picture_failed), Toast.LENGTH_SHORT).show();
+                toast(R.string.take_picture_failed);
                 btnTakePic.setEnabled(true);
                 break;
 
             case RspiApi.REQ_CONTINUOUS_SHOT:
                 //连拍失败
-                Toast.makeText(this, getString(R.string.continuous_shot_failed), Toast.LENGTH_SHORT).show();
+                toast(R.string.continuous_shot_failed);
                 btnContinuousShot.setEnabled(true);
                 break;
 
-            case RspiApi.REQ_START_RECORD:
+            case RspiApi.REQ_RECORD_VIDEO:
                 //开始录制失败
-                Toast.makeText(this, getString(R.string.start_record_failed), Toast.LENGTH_SHORT).show();
-                btnStartRecord.setEnabled(true);
-                break;
-
-            case RspiApi.REQ_STOP_RECORD:
-                //停止录制失败
-                Toast.makeText(this, getString(R.string.stop_record_failed), Toast.LENGTH_SHORT).show();
+                toast(R.string.start_record_failed);
+                btnRecordVideo.setEnabled(true);
                 break;
         }
     }
@@ -332,20 +327,17 @@ public class CarControlActivity extends AppCompatActivity implements OnResponseL
      */
     public void startRecord(View view) {
         view.setEnabled(false);
-        RspiApi.getInstance().startRecord(RspiApi.REQ_START_RECORD, DEFAULT_RECORD_SECONDS, this);
+        RspiApi.getInstance().recordVideo(RspiApi.REQ_RECORD_VIDEO, DEFAULT_RECORD_SECONDS, this);
     }
 
     /**
      * 停止录制
      * @param view
      */
-    public void stopRecord(View view) {
+    public void preview(View view) {
         view.setEnabled(false);
-        btnStartRecord.setEnabled(true);
-        mHandler.removeMessages(MSG_RECORD);
-        btnStopRecord.setText(getString(R.string.stop_record));
-        mRecordTime = 0;
-        RspiApi.getInstance().stopRecord(RspiApi.REQ_STOP_RECORD, this);
+        pushActivity(PreviewActivity.class);
+        view.setEnabled(true);
     }
 
 
